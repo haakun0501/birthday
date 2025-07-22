@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>パーティー出席者リスト</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>パーティー出席者リスト</h1>
+    <p>Google Apps Script APIからデータを取得しています。</p>
+    <div id="loading">データを読み込み中...</div>
+    <table id="attendeesTable" style="display: none;">
+        <thead>
+            <tr id="tableHeader">
+                </tr>
+        </thead>
+        <tbody id="tableBody">
+            </tbody>
+    </table>
+    <div id="error" style="color: red; display: none;">データの取得に失敗しました。</div>
+
+    <script>
+        // TODO: あなたのGoogle Apps ScriptのWebアプリURLに置き換えてください
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxyCHK0kuvxwPbtbZAA-LWkJSdDoTUQueg_nYORJOS30WJjlFGzOlt5auZXB6sKDiX1Bw/exec';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch(GAS_WEB_APP_URL)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('loading').style.display = 'none';
+                    if (data.error) {
+                        document.getElementById('error').innerText = `エラー: ${data.error}`;
+                        document.getElementById('error').style.display = 'block';
+                        return;
+                    }
+                    if (data.length === 0) {
+                        document.getElementById('tableBody').innerHTML = '<tr><td colspan="100%">まだデータがありません。</td></tr>';
+                        document.getElementById('attendeesTable').style.display = 'table';
+                        return;
+                    }
+
+                    const tableHeader = document.getElementById('tableHeader');
+                    const tableBody = document.getElementById('tableBody');
+
+                    // ヘッダーの生成
+                    const headers = Object.keys(data[0]);
+                    headers.forEach(headerText => {
+                        const th = document.createElement('th');
+                        th.textContent = headerText;
+                        tableHeader.appendChild(th);
+                    });
+
+                    // データ行の生成
+                    data.forEach(rowData => {
+                        const tr = document.createElement('tr');
+                        headers.forEach(headerText => {
+                            const td = document.createElement('td');
+                            td.textContent = rowData[headerText];
+                            tr.appendChild(td);
+                        });
+                        tableBody.appendChild(tr);
+                    });
+
+                    document.getElementById('attendeesTable').style.display = 'table';
+                })
+                .catch(error => {
+                    console.error('データの取得中にエラーが発生しました:', error);
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('error').innerText = `データの取得に失敗しました: ${error.message}`;
+                    document.getElementById('error').style.display = 'block';
+                });
+        });
+    </script>
+</body>
+</html>
